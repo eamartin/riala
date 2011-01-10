@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
 
 from attest import Tests, Assert
-from closet import Drawer
+from closet import RiakModel
 from micromodels import *
 
 closet = Tests()
 
 @closet.context
 def context():
-    class User(Drawer):
+    class User(RiakModel):
         name = CharField()
         age = IntegerField()
     yield User, dict(name='Eric Martin', age=18)
