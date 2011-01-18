@@ -29,7 +29,7 @@ def late_init():
 
 @connection_required.context
 def make_context():
-    RiakConnection(port=8091).register_model(User)
+    RiakConnection(port=8091).register(User)
     key = 'eric'
     User(_key=key, **data).store()
     yield User, key
@@ -41,6 +41,20 @@ def test_get(User, key):
     Assert(instance.to_dict()) == data
     Assert(instance.name) == data['name']
     Assert(instance._lazy).is_(None)
+
+@connection_required.test
+def test_map(User, key):
+    all_users = User.map(
+    '''function(v)
+    {
+        var data = JSON.parse(v.values[0].data);
+        return [[v.key, data]];
+    }''')
+
+    for user in all_users:
+        print user.to_dict()
+
+    print len(all_users)
 
 tests = Tests([no_connection, connection_required])
 
