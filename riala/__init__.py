@@ -52,7 +52,6 @@ class RiakModelList(object):
 
 
 class RiakModel(micromodels.Model):
-    '''Closets are a place to store your messy data.'''
 
     def __init__(self, _key=None, _lazy=None, **kwargs):
         super(RiakModel, self).__init__()
