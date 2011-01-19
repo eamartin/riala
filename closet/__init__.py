@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-import functools
 import riak
 
 #temporary fix to use dev micromodels
@@ -22,7 +21,7 @@ class RiakModelList(object):
     class __metaclass__(type):
 
         @staticmethod
-        def make_closure(key):
+        def make_proxy(key):
             def wrapper(self, *args, **kwargs):
                 func = getattr(self.results, key)
                 return func(*args, **kwargs)
@@ -32,7 +31,7 @@ class RiakModelList(object):
 
         def __init__(cls, name, bases, attrs):
             for key in ('__iter__', '__getitem__', '__bool__', '__len__'):
-                setattr(cls, key, cls.make_closure(key))
+                setattr(cls, key, cls.__metaclass__.make_proxy(key))
 
     def __init__(self, result_cls, query):
         self.query = query
