@@ -1,48 +1,58 @@
 # -*- coding: utf-8 -*-
 
 from attest import Tests, Assert
-from closet import RiakConnection, RiakModel
+from riala import RiakConnection, RiakModel
 from micromodels import *
 
-no_connection = Tests()
-connection_required = Tests()
+init = Tests()
+mock_connection = Tests()
 
 class User(RiakModel):
     name = CharField()
     age = IntegerField()
 
-data = dict(name='Eric Martin', age=18)
+data = {
+    'eric': dict(name='Eric M.', age=18),
+    'jordan': dict(name='Jordan C.', age=17),
+    'bobby': dict(name='Bobby L.', age=50)
+}
 
-@no_connection.test
+
+@init.test
 def full_init():
-    instance = User(**data)
-    Assert(instance.to_dict()) == data
+    key = data.keys()[0]
+    instance = User(**data[key])
+    Assert(instance.to_dict()) == data[key]
 
-@no_connection.test
+@init.test
 def late_init():
+    key = data.keys()[0]
+
     instance = User()
     Assert(instance.to_dict()) == {}
-    instance.name = data['name']
-    Assert(instance.to_dict()) == dict(name=data['name'])
-    instance.age = data['age']
-    Assert(instance.to_dict()) == data
 
-@connection_required.context
-def make_context():
-    RiakConnection(port=8091).register(User)
-    key = 'eric'
-    User(_key=key, **data).store()
-    yield User, key
+    instance.name = data[key]['name']
+    Assert(instance.to_dict()['name']) == data[key]['name']
 
-@connection_required.test
-def test_get(User, key):
+    instance.age = data[key]['age']
+    Assert(instance.to_dict()['age']) == data[key]['age']
+
+    instance.set_data(data[key])
+    Assert(instance.to_dict()) == data[key]
+
+conn = RiakConnection()
+conn.register(User)
+
+@mock_connection.test
+def test_get():
     instance = User.get(key)
+
     Assert(instance._lazy).is_not(None)
     Assert(instance.to_dict()) == data
     Assert(instance.name) == data['name']
     Assert(instance._lazy).is_(None)
 
-@connection_required.test
+@mock_connection.test
 def test_map(User, key):
     all_users = User.map(
     '''function(v)
@@ -51,12 +61,12 @@ def test_map(User, key):
         return [[v.key, data]];
     }''')
 
-    for user in all_users:
-        print user.to_dict()
+    iter(all_users)
+    len(all_users)
+    all_users[0], all_users[-1], all_users[1:-1]
+    bool(all_users)
 
-    print len(all_users)
-
-tests = Tests([no_connection, connection_required])
+tests = Tests([init, mock_connection])
 
 if __name__ == '__main__':
     tests.main()
